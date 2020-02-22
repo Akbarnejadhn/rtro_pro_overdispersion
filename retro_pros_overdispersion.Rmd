@@ -93,3 +93,26 @@ $$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2 X_{2i}$$
 We can observe that the estimate for $\beta_1$ is `r summary(logit_prosp)$coefficients[2,1]`, this means that the log odds ration of developing cancer is `r round(summary(logit_prosp)$coefficients[2,1], 2)` for the exposed group (the group with daily alcohol comsumption of equal to or more than 80 grams) compared to unexposed group (the group with daily alcohol comsumption of 0-79 grams), holding age constant.
 
 Also, we can observe that the estimate for $\beta_2$ is `r summary(logit_prosp)$coefficients[3,1]`, this means that the log odds ration of developing cancer is `r round(summary(logit_prosp)$coefficients[3,1], 2)` for each one unit(10 years here) increase in age, holding exposure (alcohol consumption status) constant.
+
+These results show that age and alcohol comsumption are positively associated with this specific cancer.
+
+## Problem 2
+
+In this problem, we are going to fit a logistic regression model to study the relation between germination rates and different types of seed and root extract.
+
+This is an example of prospective study  with root and seed type as predictor and germination as response. Seed types are O. aegyptiaca 75 (coded as 0) or O. aegyptiaca 73(coded as 1) and root types are bean(coded as 0) and cucumber(coded as 1). So we have two predictors and each of them are binary. Our response is continuous.
+
+```{r data2}
+
+# seed: 0 >> O. aegyptiaca 75, seed: 1 >> O. aegyptiaca 73
+# root: 0 >> Bean, root: 1 >> cucumber
+
+# making data df
+germ_data = tibble (
+  seed = c(rep(0, 11), rep(1, 10)),
+  root = c(rep(0, 5), rep(1, 6), rep(0, 5), rep(1, 5)),
+  y = c(c(10, 23, 23, 26, 17), c(5, 53, 55, 32, 46, 10), c(8, 10, 8, 23, 0), c(3, 22, 15, 32, 3)),
+  m = c(c(39, 62, 81, 51, 39), c(6, 74, 72, 51, 79, 13), c(16, 30, 28, 45, 4), c(12, 41, 30, 51, 7))
+)
+
+```
