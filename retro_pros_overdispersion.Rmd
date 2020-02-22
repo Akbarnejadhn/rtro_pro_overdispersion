@@ -71,20 +71,25 @@ m0 = sum(m0_df$sum_cntrl)
 # using table to calculate n1 and n0
 n1 = 205
 n0 = 770
-# now I know what my table looks like
+# now I know what my table looks like!
+```
+
+Note that this is retrospective data, so we cannot use it to calculate relative risk (RR), even with fitting prospective model. But we can treat the study as prospective (despite the fact that the data has been collected retrospectively) and treat disease status as response.
+
+Fitting a prospective model to this data, we will have the following result:
+
+```{r pros_model}
 
 # fitting a prospective model
 response = cbind(cancer_data$case, cancer_data$control)
 # fit logit model
 logit_prosp = glm(response ~ cancer_data$alcohol_consump + cancer_data$age, family=binomial(link='logit'))
 summary(logit_prosp)
-
 ```
 
-Fitting a prospective model to this data, we will have the following result:
 
-```{r pros_model}
+$$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2 X_{2i}$$
 
+We can observe that the estimate for $\beta_1$ is `r summary(logit_prosp)$coefficients[2,1]`, this means that the log odds ration of developing cancer is `r round(summary(logit_prosp)$coefficients[2,1], 2)` for the exposed group (the group with daily alcohol comsumption of equal to or more than 80 grams) compared to unexposed group (the group with daily alcohol comsumption of 0-79 grams), holding age constant.
 
-```
-
+Also, we can observe that the estimate for $\beta_2$ is `r summary(logit_prosp)$coefficients[3,1]`, this means that the log odds ration of developing cancer is `r round(summary(logit_prosp)$coefficients[3,1], 2)` for each one unit(10 years here) increase in age, holding exposure (alcohol consumption status) constant.
