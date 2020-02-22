@@ -29,14 +29,62 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 
 ## Problem 1
 
+This problem investigates data deriven from a retrospective study that studies the relationship between alcohol consumption (alcohol concentration) and emergence of cancer. The study has been adjusted for age.
+
 ```{r data}
+
+# help myself understand the data (retrospective data):
+
+###############################################################################
+#
+#                       case(cancer+)         control(cancer-) 
+#
+# #exosed (alcohol80+)      96                        109             n1=205
+# #unexposed (alc 80-)      104                       666             n0=770
+#                           
+#                           m1=200                    m0=775
+#
+#
+################################################################################
 
 cancer_data = tibble(
   age = rep(c(25, 35, 45, 55, 65, 75), 2),
-  alcohol_concentration = c(rep("0-79 g", 6), rep("80+ g", 6)),
+  alcohol_consump = c(rep("0-79 g", 6), rep("80+ g", 6)),
   case = c(0, 5, 21, 34, 36, 8, 1, 4, 25, 42, 19, 5),
   control = c(106, 164, 138, 139, 88, 31, 9, 26, 29, 27, 18, 0)
 )
+
+m1_df = cancer_data %>% 
+  group_by(alcohol_consump) %>%
+  select(case) %>% 
+  summarize(sum_case = sum(case))
+
+m1 = sum(m1_df$sum_case)
+
+m0_df = m1 = cancer_data %>% 
+  group_by(alcohol_consump) %>%
+  select(control) %>% 
+  summarize(sum_cntrl = sum(control))
+
+m0 = sum(m0_df$sum_cntrl)
+
+# using table to calculate n1 and n0
+n1 = 205
+n0 = 770
+# now I know what my table looks like
+
+# fitting a prospective model
+response = cbind(cancer_data$case, cancer_data$control)
+# fit logit model
+logit_prosp = glm(response ~ cancer_data$alcohol_consump + cancer_data$age, family=binomial(link='logit'))
+summary(logit_prosp)
+
+```
+
+Fitting a prospective model to this data, we will have the following result:
+
+```{r pros_model}
+
 
 ```
 
