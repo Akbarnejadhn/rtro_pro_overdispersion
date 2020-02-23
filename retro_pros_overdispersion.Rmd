@@ -2,8 +2,10 @@
 title: "retro_prospect_overdispersion"
 author: "Hana Akbarnejad"
 date: "2/22/2020"
-output: html_document
+output: pdf_document
 ---
+
+**The Full code chunks and results for this assignment can be found on the Rmd file submitted with this pdf file**
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -31,7 +33,7 @@ theme_set(theme_minimal() + theme(legend.position = "bottom"))
 
 This problem investigates data deriven from a retrospective study that studies the relationship between alcohol consumption (alcohol concentration) and emergence of cancer. The study has been adjusted for age.
 
-```{r data}
+```{r data, include=FALSE}
 
 # help myself understand the data (retrospective data):
 
@@ -72,6 +74,9 @@ m0 = sum(m0_df$sum_cntrl)
 n1 = 205
 n0 = 770
 # now I know what my table looks like!
+
+# 
+response = cbind(cancer_data$case, cancer_data$control)
 ```
 
 Note that this is retrospective data, so we cannot use it to calculate relative risk (RR), even with fitting prospective model. But we can treat the study as prospective (despite the fact that the data has been collected retrospectively) and treat disease status as response.
@@ -81,14 +86,12 @@ Fitting a prospective model to this data, we will have the following result:
 ```{r pros_model}
 
 # fitting a prospective model
-response = cbind(cancer_data$case, cancer_data$control)
-# fit logit model
 logit_prosp = glm(response ~ cancer_data$alcohol_consump + cancer_data$age, family=binomial(link='logit'))
 summary(logit_prosp)
 ```
 
 
-$$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2 X_{2i}$$
+$$log(\frac{\pi}{1-\pi}) = \beta_0 + \beta_1X_{1} + \beta_2 X_{2}$$
 
 We can observe that the estimate for $\beta_1$ is `r summary(logit_prosp)$coefficients[2,1]`, this means that the log odds ration of developing cancer is `r round(summary(logit_prosp)$coefficients[2,1], 2)` for the exposed group (the group with daily alcohol comsumption of equal to or more than 80 grams) compared to unexposed group (the group with daily alcohol comsumption of 0-79 grams), holding age constant.
 
@@ -104,7 +107,7 @@ In this problem, we are going to fit a logistic regression model to study the re
 
 This is an example of prospective study  with root and seed type as predictor and germination as response. Seed types are O. aegyptiaca 75 (coded as 0) or O. aegyptiaca 73(coded as 1) and root types are bean(coded as 0) and cucumber(coded as 1). So we have two predictors and each of them are binary. Our response is continuous.
 
-```{r data2}
+```{r data2, echo = FALSE}
 
 # seed: 0 >> O. aegyptiaca 75, seed: 1 >> O. aegyptiaca 73
 # root: 0 >> Bean, root: 1 >> cucumber
@@ -143,9 +146,9 @@ In this part we are interested to check the model for possible over dispersion. 
 $$G = \sum_{i = 1}^{n} \frac{(y_i - m_i\hat\pi_i)^2}{m_i\hat\pi_i(1-\hat\pi_i)\phi} \sim \chi^2 (n-p)$$
 Where $$G_0 = \sum_{i = 1}^{n} \frac{(y_i - m_i\hat\pi_i)^2}{m_i\hat\pi_i(1-\hat\pi_i)}$$ is the Original Pearson $\chi^2$ statistics we grt from binomial distribution without dispersion. So, to estinate $\phi$, we use the formula:
 
-$\hat\phi = G_0/(n-p) $ or $\hat\phi = D_0/(n-p)$ where $D_0$ is the deviance of original model without overdispersion. The results are similar.
+$\hat\phi = G_0/(n-p)$ or $\hat\phi = D_0/(n-p)$ where $D_0$ is the deviance of original model without overdispersion. The results are similar.
 
-```{r overdispersion}
+```{r overdispersion, echo=FALSE}
 # n = 21 (total number)
 # p = 2 (seed and root)
 # n - p = 19
@@ -159,7 +162,7 @@ phi_hat_G = G_0 / (21-2) # over dispersion parameter estimated using G_0
 
 We can see that over dispersion parameter estimated from Generalized Pearson $\chi^2$ is `r round(phi_hat_G, 2)` which is greater than 1 and confirms that our model is over dispersed. To visualize and confirm this result, we use half-normal plot:
 
-```{r half_normal_plot}
+```{r half_normal_plot, echo=FALSE}
 
 res=residuals(germ_logit,type='pearson')
 plot(qnorm((21+1:21+0.5)/(2*21+1.125)),sort(abs(res)),xlab='Expected Half-Normal Order Stats',ylab='Ordered Abs Pearson Residuals')
@@ -181,3 +184,5 @@ The log odds ratio of germination is changed by `r round(summary(germ_logit, dis
 The log odds ratio for germination is changed by `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[3, 1], 2)` (increases) when we go from bean root compared to cucumber root, holding the seed type constant.
 
 ### Part 3
+
+The source of overdispersion might be Intra-class correlation, because the germination in plants from the same seed might be correlated in other characteristics and how they grow on different medium.
