@@ -460,7 +460,40 @@ germ_data = tibble (
   root = c(rep(0, 5), rep(1, 6), rep(0, 5), rep(1, 5)),
   y = c(c(10, 23, 23, 26, 17), c(5, 53, 55, 32, 46, 10), c(8, 10, 8, 23, 0), c(3, 22, 15, 32, 3)),
   m = c(c(39, 62, 81, 51, 39), c(6, 74, 72, 51, 79, 13), c(16, 30, 28, 45, 4), c(12, 41, 30, 51, 7))
-)</code></pre>
+) 
+
+
+germ_rate = cbind(germ_data$y, germ_data$m - germ_data$y)</code></pre>
+<p>Fitting a model to study the relation between germination rates and different types of seed and root extract:</p>
+<pre class="r"><code>germ_logit = glm(germ_rate ~ seed + root, family = binomial(link = &#39;logit&#39;), data = germ_data)
+summary(germ_logit)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = germ_rate ~ seed + root, family = binomial(link = &quot;logit&quot;), 
+##     data = germ_data)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.3919  -0.9949  -0.3744   0.9831   2.4766  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  -0.4300     0.1137  -3.781 0.000156 ***
+## seed         -0.2705     0.1547  -1.748 0.080435 .  
+## root          1.0647     0.1442   7.383 1.55e-13 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 98.719  on 20  degrees of freedom
+## Residual deviance: 39.686  on 18  degrees of freedom
+## AIC: 122.28
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<p>The summary of logistic regression model shows that the log odds of germination is -0.43 for O. aegyptiaca 75 plants if grown in bean root media.</p>
+<p>the log odds ratio of germination is reduced by -0.27 when we go from seed type species O. aegyptiaca 75(0) to O. aegyptiaca 73(1), holding the root type constant.</p>
+<p>The log odds ratio for germination is increased by 1.06 when we go from bean root compared to cucumber root, holding the seed type constant.</p>
 </div>
 
 

@@ -98,6 +98,8 @@ These results show that age and alcohol comsumption are positively associated wi
 
 ## Problem 2
 
+### Part 1
+
 In this problem, we are going to fit a logistic regression model to study the relation between germination rates and different types of seed and root extract.
 
 This is an example of prospective study  with root and seed type as predictor and germination as response. Seed types are O. aegyptiaca 75 (coded as 0) or O. aegyptiaca 73(coded as 1) and root types are bean(coded as 0) and cucumber(coded as 1). So we have two predictors and each of them are binary. Our response is continuous.
@@ -113,6 +115,69 @@ germ_data = tibble (
   root = c(rep(0, 5), rep(1, 6), rep(0, 5), rep(1, 5)),
   y = c(c(10, 23, 23, 26, 17), c(5, 53, 55, 32, 46, 10), c(8, 10, 8, 23, 0), c(3, 22, 15, 32, 3)),
   m = c(c(39, 62, 81, 51, 39), c(6, 74, 72, 51, 79, 13), c(16, 30, 28, 45, 4), c(12, 41, 30, 51, 7))
-)
+) 
+
+
+germ_rate = cbind(germ_data$y, germ_data$m - germ_data$y)
 
 ```
+
+Fitting a model to study the relation between germination rates and different types of seed and root extract and interpretation of results:
+
+```{r model2}
+
+germ_logit = glm(germ_rate ~ seed + root, family = binomial(link = 'logit'), data = germ_data)
+summary(germ_logit)
+```
+
+The summary of logistic regression model shows that the log odds of germination is `r round(summary(germ_logit)$coefficients[1, 1], 2)` for O. aegyptiaca 75 plants if grown in bean root media.
+
+The log odds ratio of germination is changed by `r round(summary(germ_logit)$coefficients[2, 1], 2)` (reduces) when we go from seed type species O. aegyptiaca 75(0) to O. aegyptiaca 73(1), holding the root type constant. Note that the p-value for seed type coefficient is `r round(summary(germ_logit)$coefficients[2, 4], 2)`, because this value is greater than $\alpha = 0.05$, we can conclude that that seed type is an insignificant variable. 
+
+The log odds ratio for germination is changed by `r round(summary(germ_logit)$coefficients[3, 1], 2)` (increases) when we go from bean root compared to cucumber root, holding the seed type constant.
+
+### Part 2
+
+In this part we are interested to check the model for possible over dispersion. To do so, we need to calculate Generalized Pearson $\chi^2$ as follows:
+
+$$G = \sum_{i = 1}^{n} \frac{(y_i - m_i\hat\pi_i)^2}{m_i\hat\pi_i(1-\hat\pi_i)\phi} \sim \chi^2 (n-p)$$
+Where $$G_0 = \sum_{i = 1}^{n} \frac{(y_i - m_i\hat\pi_i)^2}{m_i\hat\pi_i(1-\hat\pi_i)}$$ is the Original Pearson $\chi^2$ statistics we grt from binomial distribution without dispersion. So, to estinate $\phi$, we use the formula:
+
+$\hat\phi = G_0/(n-p) $ or $\hat\phi = D_0/(n-p)$ where $D_0$ is the deviance of original model without overdispersion. The results are similar.
+
+```{r overdispersion}
+# n = 21 (total number)
+# p = 2 (seed and root)
+# n - p = 19
+
+G_0 = sum(residuals(germ_logit,type='pearson')^2) # pearson chisq statistics (G0)
+phi_hat_G = G_0 / (21-2) # over dispersion parameter estimated using G_0
+
+# phi_hat_D = germ_logit$deviance/(21-2)
+# tilde.phi=germ_logit$deviance/germ_logit$df.residual his!
+```
+
+We can see that over dispersion parameter estimated from Generalized Pearson $\chi^2$ is `r round(phi_hat_G, 2)` which is greater than 1 and confirms that our model is over dispersed. To visualize and confirm this result, we use half-normal plot:
+
+```{r half_normal_plot}
+
+res=residuals(germ_logit,type='pearson')
+plot(qnorm((21+1:21+0.5)/(2*21+1.125)),sort(abs(res)),xlab='Expected Half-Normal Order Stats',ylab='Ordered Abs Pearson Residuals')
+abline(a=0,b=1)
+abline(a=0,b=sqrt(phi_hat_G),lty=2)
+```
+
+As the above half-normal plot shows, our model is over dispersed. So we need to update our model:
+
+```{r updated_model}
+
+summary(germ_logit, dispersion = phi_hat_G)
+```
+
+The summary of logistic regression model shows that the log odds of germination is `r round(summary(germ_logit, dispersion=phi_hat_G)$coefficients[1, 1], 2)` for O. aegyptiaca 75 plants if grown in bean root media, considering overdispersion.
+
+The log odds ratio of germination is changed by `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[2, 1], 2)` (reduces) when we go from seed type species O. aegyptiaca 75(0) to O. aegyptiaca 73(1), holding the root type constant. Note that the p-value for seed type coefficient is `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[2, 4], 2)`, because this value is greater than $\alpha = 0.05$, we can conclude that that seed type is an insignificant variable. 
+
+The log odds ratio for germination is changed by `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[3, 1], 2)` (increases) when we go from bean root compared to cucumber root, holding the seed type constant.
+
+### Part 3
