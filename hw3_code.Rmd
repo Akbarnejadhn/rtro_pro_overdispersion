@@ -1,0 +1,131 @@
+---
+title: "code for HW3"
+author: "Hana Akbarnejad"
+date: "2/24/2020"
+output: pdf_document
+---
+
+# All code chunks and output used for HW3
+
+```{r}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(viridis)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	warning = FALSE,
+	fig.width = 8, 
+  fig.height = 6,
+  out.width = "90%"
+)
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+```
+
+```{r}
+# help myself understand the data (retrospective data):
+
+###############################################################################
+#
+#                       case(cancer+)         control(cancer-) 
+#
+# #exosed (alcohol80+)      96                        109             n1=205
+# #unexposed (alc 80-)      104                       666             n0=770
+#                           
+#                           m1=200                    m0=775
+#
+#
+################################################################################
+
+cancer_data = tibble(
+  age = rep(c(25, 35, 45, 55, 65, 75), 2),
+  alcohol_consump = c(rep("0-79 g", 6), rep("80+ g", 6)),
+  case = c(0, 5, 21, 34, 36, 8, 1, 4, 25, 42, 19, 5),
+  control = c(106, 164, 138, 139, 88, 31, 9, 26, 29, 27, 18, 0)
+)
+
+cancer_data
+
+m1_df = cancer_data %>% 
+  group_by(alcohol_consump) %>%
+  select(case) %>% 
+  summarize(sum_case = sum(case))
+
+m1 = sum(m1_df$sum_case)
+
+m0_df = m1 = cancer_data %>% 
+  group_by(alcohol_consump) %>%
+  select(control) %>% 
+  summarize(sum_cntrl = sum(control))
+
+m0 = sum(m0_df$sum_cntrl)
+
+# using table to calculate n1 and n0
+n1 = 205
+n0 = 770
+# now I know what my table looks like!
+
+# 
+response = cbind(cancer_data$case, cancer_data$control)
+response
+```
+
+```{r}
+# fitting a prospective model
+logit_prosp = glm(response ~ cancer_data$alcohol_consump + cancer_data$age, family=binomial(link='logit'))
+summary(logit_prosp)
+```
+
+```{r}
+# seed: 0 >> O. aegyptiaca 75, seed: 1 >> O. aegyptiaca 73
+# root: 0 >> Bean, root: 1 >> cucumber
+
+# making data df
+germ_data = tibble (
+  seed = c(rep(0, 11), rep(1, 10)),
+  root = c(rep(0, 5), rep(1, 6), rep(0, 5), rep(1, 5)),
+  y = c(c(10, 23, 23, 26, 17), c(5, 53, 55, 32, 46, 10), c(8, 10, 8, 23, 0), c(3, 22, 15, 32, 3)),
+  m = c(c(39, 62, 81, 51, 39), c(6, 74, 72, 51, 79, 13), c(16, 30, 28, 45, 4), c(12, 41, 30, 51, 7))
+) 
+
+germ_data
+germ_rate = cbind(germ_data$y, germ_data$m - germ_data$y)
+germ_rate
+```
+
+```{r}
+germ_logit = glm(germ_rate ~ seed + root, family = binomial(link = 'logit'), data = germ_data)
+summary(germ_logit)
+```
+
+```{r}
+# n = 21 (total number)
+# p = 3 (seed and root)
+# n - p = 18
+
+G_0 = sum(residuals(germ_logit,type='pearson')^2) # pearson chisq statistics (G0)
+phi_hat_G = G_0 / (21-3) # over dispersion parameter estimated using G_0
+phi_hat_G
+
+# phi_hat_D = germ_logit$deviance/(21-3)
+# tilde.phi=germ_logit$deviance/germ_logit$df.residual his!
+```
+
+```{r}
+res=residuals(germ_logit,type='pearson')
+plot(qnorm((21+1:21+0.5)/(2*21+1.125)),sort(abs(res)),xlab='Expected Half-Normal Order Stats',ylab='Ordered Abs Pearson Residuals')
+abline(a=0,b=1)
+abline(a=0,b=sqrt(phi_hat_G),lty=2)
+```
+
+```{r}
+summary(germ_logit, dispersion = phi_hat_G)
+```
+
