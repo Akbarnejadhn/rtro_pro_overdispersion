@@ -1,7 +1,7 @@
 ---
-title: "retro_prospect_overdispersion"
+title: "This is a project to practice the concepts of Retrospective and Prospective models and Overdispersion"
 author: "Hana Akbarnejad"
-date: "2/22/2020"
+date: "2/24/2020"
 output: pdf_document
 ---
 
@@ -92,10 +92,13 @@ summary(logit_prosp)
 
 
 $$log(\frac{\pi}{1-\pi}) = \beta_0 + \beta_1X_{1} + \beta_2 X_{2}$$
+$$log(\frac{\pi}{1-\pi}) = \beta_0 + \beta_1(alcohol) + \beta_2 (age)$$
 
-We can observe that the estimate for $\beta_1$ is `r summary(logit_prosp)$coefficients[2,1]`, this means that the log odds ration of developing cancer is `r round(summary(logit_prosp)$coefficients[2,1], 2)` for the exposed group (the group with daily alcohol comsumption of equal to or more than 80 grams) compared to unexposed group (the group with daily alcohol comsumption of 0-79 grams), holding age constant.
+We can observe that $\beta_0$ is `r round(summary(logit_prosp)$coefficients[1,1], 2)` which is the the log odds of cancer in age 0 and alcohol consumption of less thab 80 grams (unexposed group).
 
-Also, we can observe that the estimate for $\beta_2$ is `r summary(logit_prosp)$coefficients[3,1]`, this means that the log odds ration of developing cancer is `r round(summary(logit_prosp)$coefficients[3,1], 2)` for each one unit(10 years here) increase in age, holding exposure (alcohol consumption status) constant.
+the estimate for $\beta_1$ is `r summary(logit_prosp)$coefficients[2,1]`, this means that the log odds ratio of developing cancer is `r round(summary(logit_prosp)$coefficients[2,1], 2)` for the exposed group (the group with daily alcohol comsumption of equal to or more than 80 grams) compared to unexposed group (the group with daily alcohol comsumption of 0-79 grams), holding age constant.
+
+Also, we can observe that the estimate for $\beta_2$ is `r summary(logit_prosp)$coefficients[3,1]`, this means that the log odds ratio of developing cancer is `r round(summary(logit_prosp)$coefficients[3,1], 2)` for each one unit increase in age, holding exposure (alcohol consumption status) constant.
 
 These results show that age and alcohol comsumption are positively associated with this specific cancer.
 
@@ -127,17 +130,20 @@ germ_rate = cbind(germ_data$y, germ_data$m - germ_data$y)
 
 Fitting a model to study the relation between germination rates and different types of seed and root extract and interpretation of results:
 
+$$log(\frac{\pi}{1-\pi}) = \beta_0 + \beta_1X_{1} + \beta_2 X_{2}$$
+$$log(\frac{\pi}{1-\pi}) = \beta_0 + \beta_1(seed) + \beta_2 (medium)$$
+
 ```{r model2}
 
 germ_logit = glm(germ_rate ~ seed + root, family = binomial(link = 'logit'), data = germ_data)
 summary(germ_logit)
 ```
 
-The summary of logistic regression model shows that the log odds of germination is `r round(summary(germ_logit)$coefficients[1, 1], 2)` for O. aegyptiaca 75 plants if grown in bean root media.
+The summary of logistic regression model shows that the log odds of germination is `r round(summary(germ_logit)$coefficients[1, 1], 2)` for O. aegyptiaca 75 plants if grown in bean root extract media.
 
-The log odds ratio of germination is changed by `r round(summary(germ_logit)$coefficients[2, 1], 2)` (reduces) when we go from seed type species O. aegyptiaca 75(0) to O. aegyptiaca 73(1), holding the root type constant. Note that the p-value for seed type coefficient is `r round(summary(germ_logit)$coefficients[2, 4], 2)`, because this value is greater than $\alpha = 0.05$, we can conclude that that seed type is an insignificant variable. 
+The log odds ratio of germination is `r round(summary(germ_logit)$coefficients[2, 1], 2)` between seed type species O. aegyptiaca 75(0) versus O. aegyptiaca 73(1) seed type, holding the root media type constant. Note that the p-value for seed type coefficient is `r round(summary(germ_logit)$coefficients[2, 4], 2)`, because this value is greater than $\alpha = 0.05$, we can conclude that that seed type is an insignificant variable. 
 
-The log odds ratio for germination is changed by `r round(summary(germ_logit)$coefficients[3, 1], 2)` (increases) when we go from bean root compared to cucumber root, holding the seed type constant.
+The log odds ratio for germination is `r round(summary(germ_logit)$coefficients[3, 1], 2)` between bean root medium type compared to cucumber root extract medium, holding the seed type constant.
 
 ### Part 2
 
@@ -150,13 +156,13 @@ $\hat\phi = G_0/(n-p)$ or $\hat\phi = D_0/(n-p)$ where $D_0$ is the deviance of 
 
 ```{r overdispersion, echo=FALSE}
 # n = 21 (total number)
-# p = 2 (seed and root)
-# n - p = 19
+# p = 3 (seed and root)
+# n - p = 18
 
 G_0 = sum(residuals(germ_logit,type='pearson')^2) # pearson chisq statistics (G0)
-phi_hat_G = G_0 / (21-2) # over dispersion parameter estimated using G_0
+phi_hat_G = G_0 / (21-3) # over dispersion parameter estimated using G_0
 
-# phi_hat_D = germ_logit$deviance/(21-2)
+# phi_hat_D = germ_logit$deviance/(21-3)
 # tilde.phi=germ_logit$deviance/germ_logit$df.residual his!
 ```
 
@@ -177,12 +183,16 @@ As the above half-normal plot shows, our model is over dispersed. So we need to 
 summary(germ_logit, dispersion = phi_hat_G)
 ```
 
+We can see that after updating the model with dispersion, our standard error has been increased which is what we were expecting.
+
 The summary of logistic regression model shows that the log odds of germination is `r round(summary(germ_logit, dispersion=phi_hat_G)$coefficients[1, 1], 2)` for O. aegyptiaca 75 plants if grown in bean root media, considering overdispersion.
 
-The log odds ratio of germination is changed by `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[2, 1], 2)` (reduces) when we go from seed type species O. aegyptiaca 75(0) to O. aegyptiaca 73(1), holding the root type constant. Note that the p-value for seed type coefficient is `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[2, 4], 2)`, because this value is greater than $\alpha = 0.05$, we can conclude that that seed type is an insignificant variable. 
+The log odds ratio of germination is changed by `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[2, 1], 2)` (reduces) when we go from seed type species O. aegyptiaca 75(0) to O. aegyptiaca 73(1), holding the root type constant. Note that the p-value for seed type coefficient is `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[2, 4], 2)`, because this value is greater than $\alpha = 0.05$, we can conclude that that seed type is still insignificant variable after updating the moel with dispersion. 
 
 The log odds ratio for germination is changed by `r round(summary(germ_logit, dispersion = phi_hat_G)$coefficients[3, 1], 2)` (increases) when we go from bean root compared to cucumber root, holding the seed type constant.
 
 ### Part 3
 
 The source of overdispersion might be Intra-class correlation, because the germination in plants from the same seed might be correlated in other characteristics and how they grow on different medium.
+
+Also, we have clusters with different sizes that have different germination rates.
